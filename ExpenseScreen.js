@@ -17,13 +17,27 @@ export default function ExpenseScreen() {
   const [expenses, setExpenses] = useState([]);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState('');
+  const [filter, setFilter] = useState('all');
 
     const loadExpenses = async () => {
     const rows = await db.getAllAsync(
       'SELECT * FROM expenses ORDER BY id DESC;'
     );
-    setExpenses(rows);
+
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    let filteredRows = rows;
+
+    if (filter === 'week') {
+      filteredRows = rows.filter((row) => new Date(row.date) >= startOfWeek);
+    } else if (filter === 'month') {
+      filteredRows = rows.filter((row) => new Date(row.date) >= startOfMonth);
+    }
+    setExpenses(filteredRows);
   };
 
     const addExpense = async () => {
@@ -100,9 +114,29 @@ export default function ExpenseScreen() {
     setup();
   }, []);
 
+  useEffect(() => {
+    loadExpenses();
+  }, [filter]);
+
+  const totalSpending = expenses.reduce((acc, expense) => acc + expense.amount, 0);
+
     return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>Student Expense Tracker</Text>
+
+      <View style={styles.filterRow}>
+        <Button title="All" onPress={() => setFilter('all')} />
+        <Button title="This Week" onPress={() => setFilter('week')} />
+        <Button title="This Month" onPress={() => setFilter('month')} />
+      </View>
+
+    <View style={styles.analyticsRow}>
+            <Text style={styles.analyticsText}>
+                Total Spending (
+                    {filter === 'all' ? 'All' : filter === 'week' ? 'This Week' : 'This Month'}
+        ): ${totalSpending.toFixed(2)}   
+            </Text>
+        </View>
 
       <View style={styles.form}>
         <TextInput
@@ -113,6 +147,7 @@ export default function ExpenseScreen() {
           value={amount}
           onChangeText={setAmount}
         />
+
         <TextInput
           style={styles.input}
           placeholder="Category (Food, Books, Rent...)"
@@ -202,5 +237,19 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginTop: 12,
     fontSize: 12,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  analyticsRow: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  analyticsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#34d399'
   },
 });
