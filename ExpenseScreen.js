@@ -26,14 +26,24 @@ export default function ExpenseScreen() {
     );
 
     const today = new Date();
+
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
     let filteredRows = rows;
 
     if (filter === 'week') {
-      filteredRows = rows.filter((row) => new Date(row.date) >= startOfWeek);
+        filteredRows = rows.filter((row) => {
+            const expenseDate = new Date(row.date);
+            return expenseDate >= startOfWeek && expenseDate <= endOfWeek;
+        });
     } else if (filter === 'month') {
       filteredRows = rows.filter((row) => new Date(row.date) >= startOfMonth);
     }
