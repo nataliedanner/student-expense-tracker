@@ -163,7 +163,7 @@ export default function ExpenseScreen() {
         ) :
     </Text>
     {Object.entries(totalsByCategory).map(([cat, total]) => (
-        <Text key={cat}>
+        <Text key={cat} style={styles.analyticsCategory}>
             {cat}: ${total.toFixed(2)}
         </Text>
     ))}
@@ -282,4 +282,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#34d399'
   },
+  analyticsCategory: {
+    fontSize: 14,
+    color: '#e5e7eb',
+    marginLeft: 8
+  }
 });
