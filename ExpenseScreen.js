@@ -19,6 +19,7 @@ export default function ExpenseScreen() {
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
   const [filter, setFilter] = useState('all');
+  const [editingExpense, setEditingExpense] = useState(null);
 
     const loadExpenses = async () => {
     const rows = await db.getAllAsync(
@@ -89,6 +90,23 @@ export default function ExpenseScreen() {
     loadExpenses();
   };
 
+  const saveExpense = async () => {
+    const amountNumber = parseFloat(editingExpense.amount);
+    if (isNaN(amountNumber) || amountNumber <= 0) {
+      return;
+    }
+      try {
+        await db.runAsync(
+          'UPDATE expenses SET amount = ?, category = ?, note = ? WHERE id = ?;',
+          [amountNumber, editingExpense.category, editingExpense.note, editingExpense.id]
+        );
+        setEditingExpense(null);
+        loadExpenses();
+      } catch (error) {
+        console.error('Error saving expense:', error);
+      }
+  };
+
     const renderExpense = ({ item }) => (
     <View style={styles.expenseRow}>
       <View style={{ flex: 1 }}>
@@ -96,6 +114,10 @@ export default function ExpenseScreen() {
         <Text style={styles.expenseCategory}>{item.category}</Text>
         {item.note ? <Text style={styles.expenseNote}>{item.note}</Text> : null}
       </View>
+
+        <TouchableOpacity onPress={() => setEditingExpense(item)}>
+        <Text style={styles.edit}>✎</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={() => deleteExpense(item.id)}>
         <Text style={styles.delete}>✕</Text>
@@ -167,7 +189,7 @@ export default function ExpenseScreen() {
             {cat}: ${total.toFixed(2)}
         </Text>
     ))}
-
+    {/* Add Expense Form */}
       <View style={styles.form}>
         <TextInput
           style={styles.input}
@@ -195,6 +217,37 @@ export default function ExpenseScreen() {
         <Button title="Add Expense" onPress={addExpense} />
       </View>
 
+    {/* Edit Expense Form */}
+        {editingExpense && (
+        <View style={styles.form}>
+            <Text style={styles.editHeading}>Edit Expense</Text>
+            <TextInput
+                style={styles.input}
+                value={String(editingExpense.amount)}
+                keyboardType="numeric"
+                onChangeText={(text) =>
+                    setEditingExpense({ ...editingExpense, amount: text })
+                }
+            />
+            <TextInput
+                style={styles.input}
+                value={editingExpense.category}
+                onChangeText={(text) =>
+                    setEditingExpense({ ...editingExpense, category: text })
+                }
+            />
+            <TextInput
+                style={styles.input}
+                value={editingExpense.note || ''}
+                onChangeText={(text) =>
+                    setEditingExpense({ ...editingExpense, note: text })
+                }
+            />
+            <Button title="Save Changes" onPress={saveExpense} />
+            <Button title="Cancel" onPress={() => setEditingExpense(null)} color="#f87171" />
+        </View>
+    )}
+
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id.toString()}
@@ -209,7 +262,7 @@ export default function ExpenseScreen() {
       </Text>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#111827' },
@@ -286,5 +339,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#e5e7eb',
     marginLeft: 8
-  }
+  },
+  edit: {
+    color: '#60a5fa',
+    fontSize: 20,
+    marginLeft: 12,
+  },
+  editHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,    
+  },
 });
