@@ -130,16 +130,24 @@ export default function ExpenseScreen() {
 
   const totalSpending = expenses.reduce((acc, expense) => acc + expense.amount, 0);
 
+  const totalsByCategory = expenses.reduce((acc, expense) => {
+    const cat = expense.category;
+    acc[cat] = (acc[cat] || 0) + expense.amount;
+    return acc;
+  }, {});
+
     return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>Student Expense Tracker</Text>
 
+    {/* Filter Buttons */}
       <View style={styles.filterRow}>
         <Button title="All" onPress={() => setFilter('all')} />
         <Button title="This Week" onPress={() => setFilter('week')} />
         <Button title="This Month" onPress={() => setFilter('month')} />
       </View>
 
+    {/* Overall total */}
     <View style={styles.analyticsRow}>
             <Text style={styles.analyticsText}>
                 Total Spending (
@@ -147,6 +155,18 @@ export default function ExpenseScreen() {
         ): ${totalSpending.toFixed(2)}   
             </Text>
         </View>
+
+    {/* Totals by Category */}
+    <Text style={styles.analyticsText}>
+        By Category (
+            {filter ==='all' ? 'All' : filter === 'week' ? 'This Week' : 'This Month'}
+        ) :
+    </Text>
+    {Object.entries(totalsByCategory).map(([cat, total]) => (
+        <Text key={cat}>
+            {cat}: ${total.toFixed(2)}
+        </Text>
+    ))}
 
       <View style={styles.form}>
         <TextInput
