@@ -26,6 +26,7 @@ export default function ExpenseScreen() {
       'SELECT * FROM expenses ORDER BY id DESC;'
     );
 
+    // Calculate date 
     const today = new Date();
 
     const startOfWeek = new Date(today);
@@ -40,6 +41,8 @@ export default function ExpenseScreen() {
 
     let filteredRows = rows;
 
+
+    // Filter expenses
     if (filter === 'week') {
         filteredRows = rows.filter((row) => {
             const expenseDate = new Date(row.date);
@@ -51,6 +54,7 @@ export default function ExpenseScreen() {
     setExpenses(filteredRows);
   };
 
+    // Add a new expense
     const addExpense = async () => {
     const amountNumber = parseFloat(amount);
 
@@ -85,11 +89,14 @@ export default function ExpenseScreen() {
   }
 };
 
+
+    // Delete an expense
    const deleteExpense = async (id) => {
     await db.runAsync('DELETE FROM expenses WHERE id = ?;', [id]);
     loadExpenses();
   };
 
+  // Save edits to existing expense & UPDATE query
   const saveExpense = async () => {
     const amountNumber = parseFloat(editingExpense.amount);
     if (isNaN(amountNumber) || amountNumber <= 0) {
@@ -98,15 +105,20 @@ export default function ExpenseScreen() {
       try {
         await db.runAsync(
           'UPDATE expenses SET amount = ?, category = ?, note = ? WHERE id = ?;',
-          [amountNumber, editingExpense.category, editingExpense.note, editingExpense.id]
+          [amountNumber, 
+            editingExpense.category.trim(), 
+            editingExpense.note && editingExpense.note.trim() ? editingExpense.note.trim() : null,
+            editingExpense.id]
+
         );
         setEditingExpense(null);
-        loadExpenses();
+        await loadExpenses();
       } catch (error) {
         console.error('Error saving expense:', error);
       }
   };
 
+    // Render each expense row with edit and delete buttons
     const renderExpense = ({ item }) => (
     <View style={styles.expenseRow}>
       <View style={{ flex: 1 }}>
@@ -125,6 +137,7 @@ export default function ExpenseScreen() {
     </View>
   );
 
+    // Set up table
    useEffect(() => {
     async function setup() {
 
@@ -146,10 +159,13 @@ export default function ExpenseScreen() {
     setup();
   }, []);
 
+    // Reload expenses whenever filter changes
   useEffect(() => {
     loadExpenses();
   }, [filter]);
 
+
+//   Calcuate total spending and spending by category
   const totalSpending = expenses.reduce((acc, expense) => acc + expense.amount, 0);
 
   const totalsByCategory = expenses.reduce((acc, expense) => {
