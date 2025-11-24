@@ -42,9 +42,12 @@ export default function ExpenseScreen() {
       return;
     }
 
-    await db.runAsync(
-      'INSERT INTO expenses (amount, category, note) VALUES (?, ?, ?);',
-      [amountNumber, trimmedCategory, trimmedNote || null]
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+        await db.runAsync(
+        "INSERT INTO expenses (amount, category, note, date) VALUES (?, ?, ?, ?);",
+        [amountNumber, trimmedCategory, trimmedNote || null, today]
     );
 
     setAmount('');
@@ -52,7 +55,10 @@ export default function ExpenseScreen() {
     setNote('');
 
     loadExpenses();
-  };
+  } catch(error) {
+    console.error('Error adding expense:', error);
+  }
+};
 
    const deleteExpense = async (id) => {
     await db.runAsync('DELETE FROM expenses WHERE id = ?;', [id]);
@@ -75,12 +81,16 @@ export default function ExpenseScreen() {
 
    useEffect(() => {
     async function setup() {
+
+        await db.execAsync(`DROP TABLE IF EXISTS expenses;`);
+
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS expenses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           amount REAL NOT NULL,
           category TEXT NOT NULL,
-          note TEXT
+          note TEXT,
+          date TEXT NOT NULL
         );
       `);
 
@@ -134,7 +144,7 @@ export default function ExpenseScreen() {
       </Text>
     </SafeAreaView>
   );
-      }
+}
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#111827' },
